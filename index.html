@@ -1,8 +1,25 @@
 <html>
 <head>
   <script type="text/javascript" src="./js/index.js"></script>
+  <link rel="stylesheet" type="text/css" href="styles/index.css" />
 </head>
+
 <body>
-  <div id="app"></div>
+  <div id="app">
+    <div id="control-panel">
+      <div id="upload">
+        <label for="file-upload">Upload Images</label>
+        <input type="file" multiple accept="image/*" id="file-input" name="file-upload" />
+        <button id="submit-files">Submit</button>
+      </div>
+    </div>
+
+    <div id="view-container">
+      <div id="canvases">
+        <canvas id="canvas1"></canvas>
+        <canvas id="canvas2"></canvas>
+      </div>
+    </div>
+  </div>
 </body>
 </html>
