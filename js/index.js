@@ -80,7 +80,11 @@ function displayCurrent() {
   const ctx = canvas.getContext('2d');
 
   const currentImg = STATE.get('currentImg');
-  ctx.drawImage(currentImg, 0, 0);
+  const pattern = ctx.createPattern(currentImg, "no-repeat");
+  ctx.fillStyle = pattern;
+  ctx.arc(150, 150, 145, 0, 2 * Math.PI);
+  ctx.fill();
+  //ctx.stroke();
 }
 
 function setup() {
@@ -91,8 +95,17 @@ function setup() {
   const circleCanvas = getElement('#canvas1');
   const ccCtx = circleCanvas.getContext('2d');
   ccCtx.beginPath();
-  ccCtx.arc(51, 51, 50, 0, 2 * Math.PI);
-  ccCtx.stroke();
+  ccCtx.arc(150, 150, 149, 0, 2 * Math.PI);
+  ccCtx.fillStyle = "#c9c43b"
+  ccCtx.fill();
+  ccCtx.closePath();
+
+  ccCtx.beginPath();
+  ccCtx.arc(150, 150, 145, 0, 2 * Math.PI);
+  ccCtx.fillStyle = "black";
+  ccCtx.fill();
+  ccCtx.closePath();
+  //ccCtx.stroke();
 }
 
 document.addEventListener('DOMContentLoaded', setup);
