@@ -34,6 +34,7 @@ class State {
   }
 }
 
+
 const ELEMENTS = {};
 const STATE = new State();
 
@@ -75,7 +76,7 @@ function getCurrentUpload() {
 }
 
 function displayCurrent() {
-  const canvas = getElement('canvas1');
+  const canvas = getElement('#canvas2');
   const ctx = canvas.getContext('2d');
 
   const currentImg = STATE.get('currentImg');
