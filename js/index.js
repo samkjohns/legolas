@@ -166,7 +166,7 @@ function setupMouseListeners() {
 }
 
 function setup() {
-  getElement('#zoom-level').addEventListener('change', onZoomChange);
+  getElement('#zoom-level').addEventListener('input', onZoomChange);
   setupMouseListeners();
   STATE.subscribe('upload', displayCurrent);
   const submitFiles = getElement('#submit-files');
