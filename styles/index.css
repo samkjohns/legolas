@@ -2,6 +2,9 @@ canvas {
   border: 1px solid black;
   position: absolute;
   top: 50px;
-  height: 300px;
-  width: 300px;
+}
+
+#canvas-pattern {
+  top: 400px;
+  visibility: hidden;
 }

@@ -3,7 +3,8 @@ class State {
     this._state = {
       uploads: [],
       currentIdx: -1,
-      currentImg: null
+      currentImg: null,
+      zoom: 1,
     };
     this._events = {};
   }
@@ -56,6 +57,18 @@ function getElement(selector) {
   return element;
 }
 
+function removeElement(selector) {
+  if (ELEMENTS[selector]) {
+    delete ELEMENTS[selector];
+  }
+
+  const element = document.querySelector(selector);
+  if (element) {
+    element.remove();;
+  }
+}
+
+
 function uploadFiles(evt) {
   const fileUpload = getElement('#file-input');
   let uploads = [].map.call(fileUpload.files, (file) => new Upload(file));
@@ -76,18 +89,41 @@ function getCurrentUpload() {
 }
 
 function displayCurrent() {
+  const currentImg = STATE.get('currentImg');
+  if (!currentImg) return;
+
+  removeElement('#canvas-pattern');
+  const canvasPattern = document.createElement('canvas');
+  canvasPattern.id = 'canvas-pattern';
+  //canvasPattern.width = currentImg.width;
+  //canvasPattern.height = currentImg.height;
+  getElement('#canvases').appendChild(canvasPattern);
+
+  const ctxP = canvasPattern.getContext('2d');
+
+  // scale the canvas
+  canvasPattern.width = currentImg.width * STATE.get('zoom');
+  canvasPattern.height = currentImg.height * STATE.get('zoom');
+  ctxP.drawImage(currentImg, 0, 0, canvasPattern.width, canvasPattern.height);
+
   const canvas = getElement('#canvas2');
   const ctx = canvas.getContext('2d');
+  const pattern = ctxP.createPattern(canvasPattern, "no-repeat");
 
-  const currentImg = STATE.get('currentImg');
-  const pattern = ctx.createPattern(currentImg, "no-repeat");
   ctx.fillStyle = pattern;
   ctx.arc(150, 150, 145, 0, 2 * Math.PI);
   ctx.fill();
-  //ctx.stroke();
+  ctx.closePath();
+}
+
+function onZoomChange(evt) {
+  const input = getElement('#zoom-level');
+  STATE.set('zoom', input.value);
+  displayCurrent();
 }
 
 function setup() {
+  getElement('#zoom-level').addEventListener('change', onZoomChange);
   STATE.subscribe('upload', displayCurrent);
   const submitFiles = getElement('#submit-files');
   submitFiles.addEventListener('click', uploadFiles);
