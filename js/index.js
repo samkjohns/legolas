@@ -54,6 +54,29 @@ class Upload {
   }
 }
 
+function save(idx) {
+  const exportCanvas = document.createElement('canvas');
+  exportCanvas.width = 300;
+  exportCanvas.height = 300;
+  exportCanvas.style.visibility = 'hidden';
+  document.body.appendChild(exportCanvas);
+  const expCtx = exportCanvas.getContext('2d');
+
+  const canvas1 = getElement('#canvas1');
+  const canvas2 = getElement('#canvas2');
+  expCtx.drawImage(canvas1, 0, 0);
+  expCtx.drawImage(canvas2, 0, 0);
+
+  const dataUrl = exportCanvas.toDataURL("image/png");
+  const link = document.createElement('a');
+  const upload = getUpload(idx);
+  link.download = 'export_' + upload.file.name + '.png';
+  link.href = dataUrl.replace("image/png", "image/octet-stream")
+  link.click();
+
+  exportCanvas.remove();
+}
+
 function getElement(selector) {
   if (ELEMENTS[selector]) {
     return ELEMENTS[selector];
@@ -129,6 +152,7 @@ function displayCurrent(curX, curY) {
   const ctx = canvas.getContext('2d');
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
+  ctx.beginPath();
   ctx.fillStyle = pattern;
   ctx.arc(150, 150, 145, 0, 2 * Math.PI);
   ctx.fill();
@@ -209,6 +233,15 @@ function setupButtons() {
   getElement('#prev-img').addEventListener('click', getImageChanger(-1));
 }
 
+function exportFiles() {
+  const uploads = STATE.get('uploads');
+  for (let i = 0; i < uploads.length; i++) {
+    STATE.set('currentIdx', i);
+    displayCurrent();
+    save(i);
+  }
+}
+
 function setup() {
   getElement('#zoom-level').addEventListener('input', onZoomChange);
   setupMouseListeners();
@@ -216,6 +249,7 @@ function setup() {
   STATE.subscribe('upload', displayCurrent);
   const submitFiles = getElement('#submit-files');
   submitFiles.addEventListener('click', uploadFiles);
+  getElement('#export').addEventListener('click', exportFiles);
 
   const circleCanvas = getElement('#canvas1');
   const ccCtx = circleCanvas.getContext('2d');
@@ -230,7 +264,6 @@ function setup() {
   ccCtx.fillStyle = "black";
   ccCtx.fill();
   ccCtx.closePath();
-  //ccCtx.stroke();
 }
 
 document.addEventListener('DOMContentLoaded', setup);
