@@ -8,3 +8,7 @@ canvas {
   top: 400px;
   visibility: hidden;
 }
+
+#canvas2 {
+  cursor: pointer;
+}
