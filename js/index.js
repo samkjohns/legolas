@@ -5,6 +5,7 @@ class State {
       currentIdx: -1,
       currentImg: null,
       zoom: 1,
+      canRedraw: true,
     };
     this._events = {};
   }
@@ -88,7 +89,7 @@ function getCurrentUpload() {
   return STATE.get('uploads')[STATE.get('currentIdx')];
 }
 
-function displayCurrent() {
+function displayCurrent(curX, curY) {
   const currentImg = STATE.get('currentImg');
   if (!currentImg) return;
 
@@ -99,15 +100,18 @@ function displayCurrent() {
 
   const ctxP = canvasPattern.getContext('2d');
 
-  // scale and draw to the pattern canvas
+  // scale pattern canvas
   canvasPattern.width = currentImg.width * STATE.get('zoom');
   canvasPattern.height = currentImg.height * STATE.get('zoom');
-  ctxP.drawImage(currentImg, 0, 0, canvasPattern.width, canvasPattern.height);
+
+  const dx = getDx(curX);
+  const dy = getDy(curY);
+  ctxP.drawImage(currentImg, dx, dy, canvasPattern.width, canvasPattern.height);
+  const pattern = ctxP.createPattern(canvasPattern, "no-repeat");
 
   const canvas = getElement('#canvas2');
   const ctx = canvas.getContext('2d');
   ctx.clearRect(0, 0, canvas.width, canvas.height);
-  const pattern = ctxP.createPattern(canvasPattern, "no-repeat");
 
   ctx.fillStyle = pattern;
   ctx.arc(150, 150, 145, 0, 2 * Math.PI);
@@ -121,8 +125,49 @@ function onZoomChange(evt) {
   displayCurrent();
 }
 
+function getDx(curX) {
+  if (typeof(curX) !== 'number') return 0;
+  return curX - STATE.get('startX');
+}
+
+function getDy(curY) {
+  if (typeof(curY) !== 'number') return 0;
+  return curY - STATE.get('startY');
+}
+
+function onMouseDown(evt) {
+  console.log('mouse down:', evt.clientX, evt.clientY);
+  STATE.set('moving', true);
+  STATE.set('startX', evt.clientX);
+  STATE.set('startY', evt.clientY);
+}
+
+function onMouseMove(evt) {
+  if (!STATE.get('canRedraw') || !STATE.get('moving')) return;
+  console.log('mouse move:', evt.clientX, evt.clientY);
+  displayCurrent(evt.clientX, evt.clientY);
+
+  STATE.set('canRedraw', false);
+  requestAnimationFrame(function () {
+    STATE.set('canRedraw', true);
+  });
+}
+
+function onMouseUp(evt) {
+  console.log('mouse up:', evt.clientX, evt.clientY);
+  STATE.set('moving', false);
+}
+
+function setupMouseListeners() {
+  const canvas = getElement('#canvas2');
+  canvas.addEventListener('mousedown', onMouseDown);
+  canvas.addEventListener('mousemove', onMouseMove);
+  canvas.addEventListener('mouseup', onMouseUp);
+}
+
 function setup() {
   getElement('#zoom-level').addEventListener('change', onZoomChange);
+  setupMouseListeners();
   STATE.subscribe('upload', displayCurrent);
   const submitFiles = getElement('#submit-files');
   submitFiles.addEventListener('click', uploadFiles);
