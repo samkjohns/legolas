@@ -95,19 +95,18 @@ function displayCurrent() {
   removeElement('#canvas-pattern');
   const canvasPattern = document.createElement('canvas');
   canvasPattern.id = 'canvas-pattern';
-  //canvasPattern.width = currentImg.width;
-  //canvasPattern.height = currentImg.height;
   getElement('#canvases').appendChild(canvasPattern);
 
   const ctxP = canvasPattern.getContext('2d');
 
-  // scale the canvas
+  // scale and draw to the pattern canvas
   canvasPattern.width = currentImg.width * STATE.get('zoom');
   canvasPattern.height = currentImg.height * STATE.get('zoom');
   ctxP.drawImage(currentImg, 0, 0, canvasPattern.width, canvasPattern.height);
 
   const canvas = getElement('#canvas2');
   const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
   const pattern = ctxP.createPattern(canvasPattern, "no-repeat");
 
   ctx.fillStyle = pattern;
