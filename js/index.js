@@ -4,7 +4,6 @@ class State {
       uploads: [],
       currentIdx: -1,
       currentImg: null,
-      zoom: 1,
       canRedraw: true,
     };
     this._events = {};
@@ -44,7 +43,14 @@ const STATE = new State();
 class Upload {
   constructor(file) {
     this.file = file;
-    console.log(this.file);
+    this.img = null;
+    this.zoom = 1;
+  }
+
+  update(attrs) {
+    Object.keys(attrs).forEach(attr => {
+      this[attr] = attrs[attr];
+    });
   }
 }
 
@@ -69,20 +75,29 @@ function removeElement(selector) {
   }
 }
 
+function uploadFile(idx) {
+  const uploads = STATE.get('uploads');
+
+  STATE.set('currentIdx', idx);
+  const img = new Image();
+  img.onload = function () {
+    uploads[idx].img = img;
+    STATE.publish('upload');
+  }
+  img.src = URL.createObjectURL(getCurrentUpload().file);
+}
 
 function uploadFiles(evt) {
   const fileUpload = getElement('#file-input');
   let uploads = [].map.call(fileUpload.files, (file) => new Upload(file));
   STATE.set('uploads', uploads);
   if (fileUpload.files.length) {
-    STATE.set('currentIdx', 0);
-    const img = new Image();
-    img.onload = function () {
-      STATE.set('currentImg', img);
-      STATE.publish('upload');
-    }
-    img.src = URL.createObjectURL(getCurrentUpload().file);
+    uploadFile(0);
   }
+}
+
+function getUpload(idx) {
+  return STATE.get('uploads')[idx];
 }
 
 function getCurrentUpload() {
@@ -90,7 +105,8 @@ function getCurrentUpload() {
 }
 
 function displayCurrent(curX, curY) {
-  const currentImg = STATE.get('currentImg');
+  const currentUpload = getCurrentUpload();
+  const currentImg = currentUpload && currentUpload.img;
   if (!currentImg) return;
 
   removeElement('#canvas-pattern');
@@ -101,11 +117,11 @@ function displayCurrent(curX, curY) {
   const ctxP = canvasPattern.getContext('2d');
 
   // scale pattern canvas
-  canvasPattern.width = currentImg.width * STATE.get('zoom');
-  canvasPattern.height = currentImg.height * STATE.get('zoom');
+  canvasPattern.width = currentImg.width * currentUpload.zoom;
+  canvasPattern.height = currentImg.height * currentUpload.zoom;
 
-  const dx = getDx(curX);
-  const dy = getDy(curY);
+  const dx = currentUpload.dx || 0;
+  const dy = currentUpload.dy || 0;
   ctxP.drawImage(currentImg, dx, dy, canvasPattern.width, canvasPattern.height);
   const pattern = ctxP.createPattern(canvasPattern, "no-repeat");
 
@@ -121,7 +137,7 @@ function displayCurrent(curX, curY) {
 
 function onZoomChange(evt) {
   const input = getElement('#zoom-level');
-  STATE.set('zoom', input.value);
+  getCurrentUpload().update({zoom: input.value})
   displayCurrent();
 }
 
@@ -144,8 +160,12 @@ function onMouseDown(evt) {
 
 function onMouseMove(evt) {
   if (!STATE.get('canRedraw') || !STATE.get('moving')) return;
-  console.log('mouse move:', evt.clientX, evt.clientY);
-  displayCurrent(evt.clientX, evt.clientY);
+
+  const dx = getDx(evt.clientX);
+  const dy = getDy(evt.clientY);
+  const current = getCurrentUpload();
+  current.update({dx, dy});
+  displayCurrent();
 
   STATE.set('canRedraw', false);
   requestAnimationFrame(function () {
@@ -165,9 +185,34 @@ function setupMouseListeners() {
   canvas.addEventListener('mouseup', onMouseUp);
 }
 
+function getImageChanger(n) {
+  return function (evt) {
+    const currentIdx = STATE.get('currentIdx');
+    const maxIdx = STATE.get('uploads').length - 1;
+    const nextIdx = currentIdx + n;
+    if (nextIdx < 0 || nextIdx > maxIdx) {
+      return;
+    }
+
+    const nextUpload = getUpload(nextIdx);
+    if (nextUpload.img) {
+      STATE.set('currentIdx', nextIdx);
+      displayCurrent();
+    } else {
+      uploadFile(nextIdx);
+    }
+  }
+}
+
+function setupButtons() {
+  getElement('#next-img').addEventListener('click', getImageChanger(1));
+  getElement('#prev-img').addEventListener('click', getImageChanger(-1));
+}
+
 function setup() {
   getElement('#zoom-level').addEventListener('input', onZoomChange);
   setupMouseListeners();
+  setupButtons();
   STATE.subscribe('upload', displayCurrent);
   const submitFiles = getElement('#submit-files');
   submitFiles.addEventListener('click', uploadFiles);
